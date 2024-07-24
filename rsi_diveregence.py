@@ -20,7 +20,7 @@ df['RSI'] = ta.rsi(df['Close'], length=14)
 print(df.head(20))
 
 def pivotid(df1,l,n1,n2):
-    if l-n1<0 or l+n2>len(df1):
+    if l-n1<0 or l+n2>=len(df1):
         return 0
     pividlow=1
     pividhigh=1
@@ -39,7 +39,7 @@ def pivotid(df1,l,n1,n2):
         return 0
 
 def rsipivotid(df1,l,n1,n2):
-    if l-n1<0 or l+n2>len(df1):
+    if l-n1<0 or l+n2>=len(df1):
         return 0
     pividlow=1
     pividhigh=1
@@ -56,8 +56,17 @@ def rsipivotid(df1,l,n1,n2):
         return 2
     else:
         return 0
+
 df['pivot']= df.apply(lambda x: pivotid(df,x.name,5,5),axis=1)
 df['RSIpivot']= df.apply(lambda x: rsipivotid(df,x.name,5,5),axis=1)
+
+# try:
+#     df['pivot']= df.apply(lambda x: pivotid(df,x.name,5,5),axis=1)
+#     df['RSIpivot']= df.apply(lambda x: rsipivotid(df,x.name,5,5),axis=1)
+# except KeyError:
+#     print("Key Error")
+#     pass
+
 
 
 def pointpos(x):
@@ -70,22 +79,36 @@ def pointpos(x):
 
 def rsipointpos(x):
     if x['RSIpivot'] == 1:
-        return x['Low']-1e-3
+        return x['RSI']-1
     if x['RSIpivot'] == 2:
-        return x['High']+1e-3
-    if x['RSIpivot'] == 3:
+        return x['RSI']+1
+    else:
         return np.nan
 df['pointpos']= df.apply(lambda row: pointpos(row),axis=1)
 df['RSIpointpos']=df.apply(lambda row: rsipointpos(row),axis=1)
 
-fig = go.Figure(data=[go.Candlestick(x=df.index, open=df['Open'], high=df['High'], low=df['Low'], close=df['Close'], name='Candlestick'),
-                      go.Scatter(x=df.index, y=df['RSI'], mode='lines', name='RSI', yaxis='y2'),
-                      go.Scatter(x=df.index, y=df['pointpos'], mode='markers', name='Pivot', marker=dict(color='red', size=10, symbol='triangle-down')),
-                      go.Scatter(x=df.index, y=df['RSIpointpos'], mode='markers', name='RSI Pivot', marker=dict(color='green', size=10, symbol='triangle-up'))])
+fig = make_subplots(rows=2, cols=1, shared_xaxes=True, vertical_spacing=0.02)
 
-fig.update_layout(title='EURUSD 4 Hour', xaxis_rangeslider_visible=False)
+fig.add_trace(go.Candlestick(x=df.index, open=df['Open'], high=df['High'], low=df['Low'], close=df['Close'], name='Candlestick'), row=1, col=1)
+fig.add_trace(go.Scatter(x=df.index, y=df['RSI'], mode='lines', name='RSI', yaxis='y2'), row=2, col=1)
+fig.add_trace(go.Scatter(x=df.index, y=df['pointpos'], mode='markers', name='Pivot', marker=dict(color='red', size=10,)), row=1, col=1)
+fig.add_trace(go.Scatter(x=df.index, y=df['RSIpointpos'], mode='markers', name='RSI Pivot', marker=dict(color='green', size=10, )), row=2, col=1)
+fig.update_layout(title='EURUSD 4 Hour', xaxis_rangeslider_visible=False,xaxis2_rangeslider_visible=False)
+
 fig.show()
+
+
+# fig = go.Figure(data=[go.Candlestick(x=df.index, open=df['Open'], high=df['High'], low=df['Low'], close=df['Close'], name='Candlestick'),
+#                       go.Scatter(x=df.index, y=df['RSI'], mode='lines', name='RSI', yaxis='y2'),
+#                       go.Scatter(x=df.index, y=df['pointpos'], mode='markers', name='Pivot', marker=dict(color='red', size=10, symbol='triangle-down')),
+#                       go.Scatter(x=df.index, y=df['RSIpointpos'], mode='markers', name='RSI Pivot', marker=dict(color='green', size=10, symbol='triangle-up'))])
+# #fig.add_trace(go.Scatter(x=df.index, y=df['RSI'], mode='lines', name='RSI', yaxis='y2'))
+# fig.update_layout(title='EURUSD 4 Hour', xaxis_rangeslider_visible=False)
+# fig.show()
+
 # fig.append_trace(go.Candlestick(x=df.index, open=df['Open'], high=df['High'], low=df['Low'], close=df['Close']), row=1, col=1)
 # fig.append_trace(go.Scatter(x=df.index, y=df['RSI'], mode='lines', name='RSI'), row=2, col=1)
 # fig.update_layout(xaxis_rangeslider_visible = False)
 # fig.show()
+
+
